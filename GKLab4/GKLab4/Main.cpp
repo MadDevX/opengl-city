@@ -140,6 +140,9 @@ int main()
 
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
 
+		lightPos.x = 1.2f + sin(currentFrame);
+		lightPos.y = 1.0f + cos(currentFrame);
+
 		glBindVertexArray(lightVAO);
 		{
 			glm::mat4 model(1.0f);
@@ -169,10 +172,10 @@ int main()
 			{
 				glm::mat4 model(1.0f);
 				model = glm::translate(model, cubePositions[i]);
-				float angle = 20.0f * (i + 1);
+				float angle = 20.0f * (i);
 				model = glm::rotate(model, (float)glfwGetTime()*glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 				lightingShader.setMat4("model", model);
-				glm::mat3 normal = glm::transpose(glm::inverse(model));
+				glm::mat3 normal = glm::transpose(glm::inverse(view * model));
 				lightingShader.setMat3("normal", normal);
 
 				glDrawArrays(GL_TRIANGLES, 0, 36);
