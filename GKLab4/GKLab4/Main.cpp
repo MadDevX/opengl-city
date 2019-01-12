@@ -176,7 +176,9 @@ int main()
 			lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
 			lightingShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
 			lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-			lightingShader.setFloat("time", currentFrame);
+			lightingShader.setFloat("light.constant", 1.0f);
+			lightingShader.setFloat("light.linear", 0.09f);
+			lightingShader.setFloat("light.quadratic", 0.032f);
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, texture);
