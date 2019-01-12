@@ -13,7 +13,6 @@ uniform mat4 view;
 uniform mat4 projection;
 
 uniform mat3 normal;
-
 uniform vec3 lightPos;
 
 void main()
