@@ -42,9 +42,4 @@
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="stb_image.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-  </ItemGroup>
 </Project>
