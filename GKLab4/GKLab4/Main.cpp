@@ -100,8 +100,8 @@ int main()
 	// positions of the point lights
 	glm::vec3 pointLightPositions[] = 
 	{
-		glm::vec3(0.7f,  0.2f,  2.0f),
-		glm::vec3(2.3f, -3.3f, -4.0f),
+		glm::vec3(0.7f,  1.2f,  2.0f),
+		glm::vec3(-2.5f, -2.5f, -3.0f),
 		glm::vec3(-4.0f,  2.0f, -12.0f),
 		glm::vec3(0.0f,  0.0f, -3.0f)
 	};
@@ -166,13 +166,22 @@ int main()
 			modelShader.setMat3("normal", normal);
 			modelShader.setVec3("viewPos", camera.Position);
 			modelShader.setFloat("material.shininess", 16.0f);
-			modelShader.setVec3("pointLight.position", pointLightPositions[0]);
-			modelShader.setVec3("pointLight.ambient", 0.2f, 0.2f, 0.2f);
-			modelShader.setVec3("pointLight.diffuse", 0.8f, 0.8f, 0.8f);
-			modelShader.setVec3("pointLight.specular", 0.5f, 0.5f, 0.5f);
-			modelShader.setFloat("pointLight.constant", 1.0f);
-			modelShader.setFloat("pointLight.linear", 0.09f);
-			modelShader.setFloat("pointLight.quadratic", 0.032f);
+
+			modelShader.setVec3("pointLights[0].position", pointLightPositions[0]);
+			modelShader.setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
+			modelShader.setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
+			modelShader.setVec3("pointLights[0].specular", 0.3f, 0.3f, 0.3f);
+			modelShader.setFloat("pointLights[0].constant", 1.0f);
+			modelShader.setFloat("pointLights[0].linear", 0.09f);
+			modelShader.setFloat("pointLights[0].quadratic", 0.032f);
+
+			modelShader.setVec3("pointLights[1].position", pointLightPositions[1]);
+			modelShader.setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
+			modelShader.setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
+			modelShader.setVec3("pointLights[1].specular", 0.3f, 0.3f, 0.3f);
+			modelShader.setFloat("pointLights[1].constant", 1.0f);
+			modelShader.setFloat("pointLights[1].linear", 0.09f);
+			modelShader.setFloat("pointLights[1].quadratic", 0.032f);
 
 			ourModel.Draw(modelShader);
 		}
@@ -183,7 +192,7 @@ int main()
 			lightSourceShader.setMat4("view", view);
 			lightSourceShader.setMat4("projection", projection);
 
-			for (int i = 0; i < 1; i++)
+			for (int i = 0; i < 2; i++)
 			{
 				glm::mat4 model(1.0f);
 				model = glm::translate(model, pointLightPositions[i]);

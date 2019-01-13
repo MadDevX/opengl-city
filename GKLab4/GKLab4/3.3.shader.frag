@@ -48,11 +48,13 @@ in vec2 TexCoords;
 in vec3 FragPos;
 in vec3 Normal;
 
+#define NUM_POINT_LIGHTS 2
+
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 uniform vec3 viewPos;
 uniform Material material;
-uniform PointLight pointLight;
+uniform PointLight pointLights[NUM_POINT_LIGHTS];
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir); 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir); 
@@ -64,7 +66,10 @@ void main()
 	vec3 viewDir = normalize(viewPos - FragPos);
 	
 	vec3 result = vec3(0.0f);
-	result += CalcPointLight(pointLight, norm, FragPos, viewDir);
+	for(int i = 0; i < NUM_POINT_LIGHTS; i++)
+	{
+		result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
+	}
 
     FragColor = vec4(result, 1.0f);
 }
