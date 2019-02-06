@@ -30,6 +30,11 @@ struct Texture {
     string path;
 };
 
+struct Material {
+	unsigned int id;
+
+};
+
 class Mesh {
 public:
     /*  Mesh Data  */
