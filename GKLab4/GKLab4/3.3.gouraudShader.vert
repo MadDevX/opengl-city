@@ -73,7 +73,7 @@ uniform vec3 viewPos;
 uniform mat3 normal;
 
 float near = 0.1f;
-float far = 100f;
+float far = 100.0f;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir); 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir); 
