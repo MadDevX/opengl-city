@@ -28,6 +28,7 @@ float lastY = WINDOW_HEIGHT / 2.0f;
 float fogDistance = 20.0f;
 float fogAdjustmentSpeed = 5.0f;
 float carSpeed = 10.0f;
+float carRotateSpeed = 1.25f;
 bool firstMouse = true;
 
 // timing
@@ -320,22 +321,25 @@ void processInput(GLFWwindow *window, Node *car)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
 
 	bool canRotate = false;
+	float rotateDir;
 	if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
 	{
 		car->Move(glm::vec3(0.0f, 0.0f, deltaTime * carSpeed));
-		canRotate = true;
+		canRotate = !canRotate;
+		rotateDir = 1.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
 	{
 		car->Move(glm::vec3(0.0f, 0.0f, -deltaTime * carSpeed));
-		canRotate = true;
+		canRotate = !canRotate;
+		rotateDir = -1.0f;
 	}
 	if (canRotate)
 	{
 		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
-			car->Rotate(deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+			car->Rotate(deltaTime * carRotateSpeed, glm::vec3(0.0f, rotateDir, 0.0f));
 		if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-			car->Rotate(-deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+			car->Rotate(-deltaTime * carRotateSpeed, glm::vec3(0.0f, rotateDir, 0.0f));
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
