@@ -41,6 +41,12 @@
     <None Include="3.3.lightSourceShader.frag">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="3.3.gouraudShader.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="3.3.gouraudShader.frag">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Node.h">

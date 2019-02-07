@@ -136,6 +136,8 @@
     <ClCompile Include="stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="3.3.gouraudShader.frag" />
+    <None Include="3.3.gouraudShader.vert" />
     <None Include="3.3.lightingShader.frag" />
     <None Include="3.3.lightSourceShader.frag" />
     <None Include="3.3.shader.frag" />

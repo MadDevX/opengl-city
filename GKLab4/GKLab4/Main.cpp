@@ -36,6 +36,7 @@ float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
 
 int day = 1;
+int phong = 1;
 bool wasPressed = false;
 
 float fogDistance = 20.0f;
@@ -55,8 +56,13 @@ int main()
 {
 	GLFWwindow* window = initOpenGLContext();
 
-	Shader modelShader("3.3.shader.vert", "3.3.shader.frag");
-	Shader lightingShader("3.3.shader.vert", "3.3.lightingShader.frag");
+	Shader modelShaders[]
+	{
+		Shader("3.3.gouraudShader.vert", "3.3.gouraudShader.frag"),
+		Shader("3.3.shader.vert", "3.3.shader.frag")
+	};
+	//Shader modelShader("3.3.shader.vert", "3.3.shader.frag");
+	//Shader gouraudShader("3.3.gouraudShader.vert", "3.3.gouraudShader.frag");
 	Shader lightSourceShader("3.3.shader.vert", "3.3.lightSourceShader.frag");
 
 	float vertices[] =
@@ -169,15 +175,6 @@ int main()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	unsigned int texture = loadTexture("container2.png");
-	unsigned int specularMap = loadTexture("container2_specular.png");
-	unsigned int emissionMap = loadTexture("matrix.jpg");
-
-	lightingShader.use();
-	lightingShader.setInt("material.diffuse", 0);
-	lightingShader.setInt("material.specular", 1);
-	lightingShader.setInt("material.emission", 2);
-
 	while (!glfwWindowShouldClose(window))
 	{
 		float currentFrame = (float)glfwGetTime();
@@ -193,27 +190,27 @@ int main()
 		glClearColor(fogColors[day].x, fogColors[day].y, fogColors[day].z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		modelShader.use();
-		modelShader.setFloat("fogDistance", fogDistance);
-		modelShader.setVec3("fogColor", fogColors[day]);
+		modelShaders[phong].use();
+		modelShaders[phong].setFloat("fogDistance", fogDistance);
+		modelShaders[phong].setVec3("fogColor", fogColors[day]);
 
 		glm::mat4 view = cameras[activeCamera].GetViewMatrix();
 		glm::mat4 projection = glm::perspective(glm::radians(cameras[activeCamera].Zoom), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
-		modelShader.setMat4("projection", projection);
-		modelShader.setMat4("view", view);
+		modelShaders[phong].setMat4("projection", projection);
+		modelShaders[phong].setMat4("view", view);
 
 		{
-			modelShader.setVec3("viewPos", cameras[activeCamera].Position);
+			modelShaders[phong].setVec3("viewPos", cameras[activeCamera].Position);
 
-			dirLights[day].SetLight(modelShader, 0);
+			dirLights[day].SetLight(modelShaders[phong], 0);
 			for (int i = 0; i < 2; i++)
 			{
-				pointLights[i].SetLight(modelShader, i);
-				spotLightNodes[i].UpdateLight(modelShader, i);
+				pointLights[i].SetLight(modelShaders[phong], i);
+				spotLightNodes[i].UpdateLight(modelShaders[phong], i);
 			}
-			city.Draw(modelShader);
-			car.Draw(modelShader);
-			sphereNode.Draw(modelShader);
+			city.Draw(modelShaders[phong]);
+			car.Draw(modelShaders[phong]);
+			sphereNode.Draw(modelShaders[phong]);
 		}
 
 		glBindVertexArray(lightVAO);
@@ -234,11 +231,6 @@ int main()
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
 		}
-		//	// directional light
-		//	lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-		//	lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-		//	lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-		//	lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
 		glfwSwapBuffers(window);
 	}
@@ -367,6 +359,10 @@ void settingsInput(GLFWwindow *window)
 		lightFogDistance = fminf(100.0f, lightFogDistance - deltaTime * fogAdjustmentSpeed);
 	if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
 		lightFogDistance = fmaxf(1.0f, lightFogDistance + deltaTime * fogAdjustmentSpeed);
+	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+		phong = 1;
+	if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+		phong = 0;
 
 	if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
 	{
