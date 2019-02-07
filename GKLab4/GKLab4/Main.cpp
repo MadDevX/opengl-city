@@ -39,6 +39,7 @@ int day = 1;
 bool wasPressed = false;
 
 float fogDistance = 20.0f;
+float lightFogDistance = 50.0f;
 float fogAdjustmentSpeed = 5.0f;
 float carSpeed = 10.0f;
 float carRotateSpeed = 1.25f;
@@ -220,6 +221,8 @@ int main()
 			lightSourceShader.use();
 			lightSourceShader.setMat4("view", view);
 			lightSourceShader.setMat4("projection", projection);
+			lightSourceShader.setFloat("fogDistance", lightFogDistance);
+			lightSourceShader.setVec3("fogColor", fogColors[day]);
 
 			for (int i = 0; i < 2; i++)
 			{
@@ -227,6 +230,7 @@ int main()
 				model = glm::translate(model, pointLights[i].position);
 				model = glm::scale(model, glm::vec3(0.2f));
 				lightSourceShader.setMat4("model", model);
+				lightSourceShader.setVec3("lightColor", pointLights[i].diffuse * 2.0f);
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
 		}
@@ -259,6 +263,7 @@ void resetApp(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
 	activeCamera = 0;
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	fogDistance = 20.0f;
+	lightFogDistance = 50.0f;
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -358,6 +363,10 @@ void settingsInput(GLFWwindow *window)
 		fogDistance = fminf(100.0f, fogDistance + deltaTime * fogAdjustmentSpeed);
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 		fogDistance = fmaxf(1.0f, fogDistance - deltaTime * fogAdjustmentSpeed);
+	if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+		lightFogDistance = fminf(100.0f, lightFogDistance - deltaTime * fogAdjustmentSpeed);
+	if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+		lightFogDistance = fmaxf(1.0f, lightFogDistance + deltaTime * fogAdjustmentSpeed);
 
 	if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
 	{
@@ -372,6 +381,7 @@ void settingsInput(GLFWwindow *window)
 		wasPressed = false;
 	}
 }
+
 void processInput(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
