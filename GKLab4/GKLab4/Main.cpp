@@ -34,6 +34,7 @@ Camera cameras[3] =
 float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
 
+glm::vec3 fogColor(0.1f, 0.1f, 0.1f);
 float fogDistance = 20.0f;
 float fogAdjustmentSpeed = 5.0f;
 float carSpeed = 10.0f;
@@ -97,20 +98,6 @@ int main()
 		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
 		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-	};
-
-	glm::vec3 cubePositions[] = 
-	{
-		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f,  2.0f, -2.5f),
-		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 	Model cityModel("Resources/city/cityS.obj");
 	Model carModel("Resources/Car/Chevrolet_Camaro_SS_Low.obj");
@@ -183,11 +170,12 @@ int main()
 		updateCameras(&car);
 
 		//rendering
-		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+		glClearColor(fogColor.x, fogColor.y, fogColor.z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		modelShader.use();
 		modelShader.setFloat("fogDistance", fogDistance);
+		modelShader.setVec3("fogColor", fogColor);
 
 		glm::mat4 view = cameras[activeCamera].GetViewMatrix();
 		glm::mat4 projection = glm::perspective(glm::radians(cameras[activeCamera].Zoom), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
