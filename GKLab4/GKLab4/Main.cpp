@@ -252,6 +252,7 @@ void resetApp(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
 	cameras[0] = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 	car->modelMatrix = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.65f, 0.0f)), glm::vec3(0.25f, 0.25f, 0.25f));
 	day = 1;
+	phong = 1;
 	activeCamera = 0;
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	fogDistance = 20.0f;
@@ -356,9 +357,9 @@ void settingsInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 		fogDistance = fmaxf(1.0f, fogDistance - deltaTime * fogAdjustmentSpeed);
 	if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
-		lightFogDistance = fminf(100.0f, lightFogDistance - deltaTime * fogAdjustmentSpeed);
+		lightFogDistance = fmaxf(1.0f, lightFogDistance - deltaTime * fogAdjustmentSpeed);
 	if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
-		lightFogDistance = fmaxf(1.0f, lightFogDistance + deltaTime * fogAdjustmentSpeed);
+		lightFogDistance = fminf(100.0f, lightFogDistance + deltaTime * fogAdjustmentSpeed);
 	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
 		phong = 1;
 	if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
