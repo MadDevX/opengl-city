@@ -52,6 +52,8 @@ in vec3 FragPos;
 in vec3 Normal;
 
 #define NUM_POINT_LIGHTS 2
+#define NUM_SPOT_LIGHTS 2
+#define NUM_DIR_LIGHTS 1
 
 uniform float fogDistance;
 uniform sampler2D texture_diffuse1;
@@ -60,6 +62,8 @@ uniform vec3 viewPos;
 uniform Material material;
 uniform bool isTextured;
 uniform PointLight pointLights[NUM_POINT_LIGHTS];
+uniform DirLight dirLights[NUM_DIR_LIGHTS];
+uniform SpotLight spotLights[NUM_SPOT_LIGHTS];
 
 float near = 0.1f;
 float far = 100f;
