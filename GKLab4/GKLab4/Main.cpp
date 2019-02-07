@@ -95,7 +95,7 @@ int main()
 		glm::vec3(1.5f,  0.2f, -1.5f),
 		glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
-	Model ourModel("Resources/Cube/untexturedCube.obj");
+	Model ourModel("Resources/city/building.obj");
 
 	// positions of the point lights
 	glm::vec3 pointLightPositions[] = 

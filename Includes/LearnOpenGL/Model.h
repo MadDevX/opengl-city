@@ -165,9 +165,37 @@ private:
 		vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-		vector<Material> materials;
+		Material simpleMaterial = loadMaterial(material);
 		// return a mesh object created from the extracted mesh data
-		return Mesh(vertices, indices, textures);
+		if (mesh->HasTangentsAndBitangents())
+			return Mesh(vertices, indices, textures, simpleMaterial);
+		else
+			return Mesh(vertices, indices, textures, simpleMaterial, false);
+	}
+
+	Material loadMaterial(aiMaterial *mat)
+	{
+		Material simpleMat;
+		glm::vec3 vector;
+		aiColor3D color(0.0f, 0.0f, 0.0f);
+		mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+		vector.x = color.r;
+		vector.y = color.g;
+		vector.z = color.b;
+		simpleMat.diffuse = vector;
+		mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
+		vector.x = color.r;
+		vector.y = color.g;
+		vector.z = color.b;
+		simpleMat.ambient = vector;
+		mat->Get(AI_MATKEY_COLOR_SPECULAR, color);
+		vector.x = color.r;
+		vector.y = color.g;
+		vector.z = color.b;
+		simpleMat.specular = vector;
+		mat->Get(AI_MATKEY_SHININESS, simpleMat.shininess);
+
+		return simpleMat;
 	}
 
 	// checks all material textures of a given type and loads the textures if they're not loaded yet.
