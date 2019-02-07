@@ -9,12 +9,13 @@
 #include <LearnOpenGL/Camera.h>
 #include <LearnOpenGL/Model.h>
 #include "Node.h"
+#include "Lighting.h"
 
 GLFWwindow* initOpenGLContext();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window, Node *car);
+void processInput(GLFWwindow *window, Node *car, SpotLightNode *nodes);
 void updateCameras(Node *car);
 unsigned int loadTexture(char const * path);
 
@@ -29,9 +30,7 @@ Camera cameras[3] =
 	Camera(glm::vec3(0.0f, 0.0f, 0.0f)),
 	Camera(glm::vec3(-1.0f, 0.0f, 10.0f))
 };
-//Camera fpsCamera(glm::vec3(0.0f, 0.0f, 3.0f));
-//Camera followCamera(glm::vec3(0.0f, 0.0f, 0.0f));
-//Camera trackCamera(glm::vec3(-2.0f, 0.0f, 3.0f));
+
 float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
 
@@ -39,6 +38,8 @@ float fogDistance = 20.0f;
 float fogAdjustmentSpeed = 5.0f;
 float carSpeed = 10.0f;
 float carRotateSpeed = 1.25f;
+float maxAngle = 0.75f;
+float currentAngle = 0.0f;
 bool firstMouse = true;
 
 // timing
@@ -116,16 +117,27 @@ int main()
 
 	ModelNode city(&cityModel, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(0.75f, 0.75f, 0.75f)));
 	ModelNode car(&carModel, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.65f, 0.0f)), glm::vec3(0.25f, 0.25f, 0.25f)));
-	car.children.push_back(&ModelNode(&carModel, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 10.0f)), glm::vec3(0.5f, 0.5f, 0.5f))));
+	//car.AttachChild(&ModelNode(&carModel, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 10.0f)), glm::vec3(0.5f, 0.5f, 0.5f))));
 
-	// positions of the point lights
-	glm::vec3 pointLightPositions[] = 
+	PointLight pointLights[] = 
 	{
-		glm::vec3(0.7f,  1.2f,  2.0f),
-		glm::vec3(-2.5f, -2.5f, -3.0f),
-		glm::vec3(-4.0f,  2.0f, -12.0f),
-		glm::vec3(0.0f,  0.0f, -3.0f)
+		{glm::vec3(0.7f,  1.2f,  2.0f), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(0.3f, 0.3f, 0.3f), 1.0f, 0.09f, 0.032f},
+		{glm::vec3(-2.5f, -2.5f, -3.0f), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(0.3f, 0.3f, 0.3f), 1.0f, 0.09f, 0.032f}
 	};
+
+	SpotLight spotLights[] =
+	{
+		{glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(25.0f)), 1.0f, 0.09f, 0.032f, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)},
+		{glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(25.0f)), 1.0f, 0.09f, 0.032f, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)}
+	};
+
+	SpotLightNode spotLightNodes[] =
+	{
+		SpotLightNode(spotLights[0], glm::translate(glm::mat4(1.0f), glm::vec3(-1.1f, -0.2f, 4.5f))),
+		SpotLightNode(spotLights[1], glm::translate(glm::mat4(1.0f), glm::vec3(1.1f, -0.2f, 4.5f))),
+	};
+	car.AttachChild(&spotLightNodes[0]);
+	car.AttachChild(&spotLightNodes[1]);
 
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
@@ -165,7 +177,7 @@ int main()
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		processInput(window, &car);
+		processInput(window, &car, spotLightNodes);
 		glfwPollEvents();
 
 		updateCameras(&car);
@@ -185,21 +197,11 @@ int main()
 		{
 			modelShader.setVec3("viewPos", cameras[activeCamera].Position);
 
-			modelShader.setVec3("pointLights[0].position", pointLightPositions[0]);
-			modelShader.setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
-			modelShader.setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
-			modelShader.setVec3("pointLights[0].specular", 0.3f, 0.3f, 0.3f);
-			modelShader.setFloat("pointLights[0].constant", 1.0f);
-			modelShader.setFloat("pointLights[0].linear", 0.09f);
-			modelShader.setFloat("pointLights[0].quadratic", 0.032f);
-
-			modelShader.setVec3("pointLights[1].position", pointLightPositions[1]);
-			modelShader.setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
-			modelShader.setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
-			modelShader.setVec3("pointLights[1].specular", 0.3f, 0.3f, 0.3f);
-			modelShader.setFloat("pointLights[1].constant", 1.0f);
-			modelShader.setFloat("pointLights[1].linear", 0.09f);
-			modelShader.setFloat("pointLights[1].quadratic", 0.032f);
+			for (int i = 0; i < 2; i++)
+			{
+				pointLights[i].SetLight(modelShader, i);
+				spotLightNodes[i].UpdateLight(modelShader, i);
+			}
 
 			city.Draw(modelShader);
 			car.Draw(modelShader);
@@ -214,94 +216,17 @@ int main()
 			for (int i = 0; i < 2; i++)
 			{
 				glm::mat4 model(1.0f);
-				model = glm::translate(model, pointLightPositions[i]);
+				model = glm::translate(model, pointLights[i].position);
 				model = glm::scale(model, glm::vec3(0.2f));
 				lightSourceShader.setMat4("model", model);
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
 		}
-
-		//glBindVertexArray(VAO);
-		//{
-		//	lightingShader.use();
-		//	lightingShader.setMat4("view", view);
-		//	lightingShader.setMat4("projection", projection);
-		//	lightingShader.setVec3("viewPos", camera.Position);
-
-		//	lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-		//	lightingShader.setFloat("material.shininess", 32.0f);
-
 		//	// directional light
 		//	lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
 		//	lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
 		//	lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
 		//	lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-		//	// point light 1
-		//	lightingShader.setVec3("pointLights[0].position", pointLightPositions[0]);
-		//	lightingShader.setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
-		//	lightingShader.setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
-		//	lightingShader.setVec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
-		//	lightingShader.setFloat("pointLights[0].constant", 1.0f);
-		//	lightingShader.setFloat("pointLights[0].linear", 0.09f);
-		//	lightingShader.setFloat("pointLights[0].quadratic", 0.032f);
-		//	// point light 2
-		//	lightingShader.setVec3("pointLights[1].position", pointLightPositions[1]);
-		//	lightingShader.setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
-		//	lightingShader.setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
-		//	lightingShader.setVec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
-		//	lightingShader.setFloat("pointLights[1].constant", 1.0f);
-		//	lightingShader.setFloat("pointLights[1].linear", 0.09f);
-		//	lightingShader.setFloat("pointLights[1].quadratic", 0.032f);
-		//	// point light 3
-		//	lightingShader.setVec3("pointLights[2].position", pointLightPositions[2]);
-		//	lightingShader.setVec3("pointLights[2].ambient", 0.05f, 0.05f, 0.05f);
-		//	lightingShader.setVec3("pointLights[2].diffuse", 0.8f, 0.8f, 0.8f);
-		//	lightingShader.setVec3("pointLights[2].specular", 1.0f, 1.0f, 1.0f);
-		//	lightingShader.setFloat("pointLights[2].constant", 1.0f);
-		//	lightingShader.setFloat("pointLights[2].linear", 0.09f);
-		//	lightingShader.setFloat("pointLights[2].quadratic", 0.032f);
-		//	// point light 4
-		//	lightingShader.setVec3("pointLights[3].position", pointLightPositions[3]);
-		//	lightingShader.setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
-		//	lightingShader.setVec3("pointLights[3].diffuse", 0.8f, 0.8f, 0.8f);
-		//	lightingShader.setVec3("pointLights[3].specular", 1.0f, 1.0f, 1.0f);
-		//	lightingShader.setFloat("pointLights[3].constant", 1.0f);
-		//	lightingShader.setFloat("pointLights[3].linear", 0.09f);
-		//	lightingShader.setFloat("pointLights[3].quadratic", 0.032f);
-		//	// spotLight
-		//	lightingShader.setVec3("spotLight.position", camera.Position);
-		//	lightingShader.setVec3("spotLight.direction", camera.Front);
-		//	lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-		//	lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-		//	lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-		//	lightingShader.setFloat("spotLight.constant", 1.0f);
-		//	lightingShader.setFloat("spotLight.linear", 0.09f);
-		//	lightingShader.setFloat("spotLight.quadratic", 0.032f);
-		//	lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-		//	lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
-
-
-		//	glActiveTexture(GL_TEXTURE0);
-		//	glBindTexture(GL_TEXTURE_2D, texture);
-		//	glActiveTexture(GL_TEXTURE1);
-		//	glBindTexture(GL_TEXTURE_2D, specularMap);
-		//	//glActiveTexture(GL_TEXTURE2);
-		//	//glBindTexture(GL_TEXTURE_2D, emissionMap);
-
-		//	for (unsigned int i = 0; i < 10; i++)
-		//	{
-		//		glm::mat4 model(1.0f);
-		//		model = glm::translate(model, cubePositions[i]);
-		//		float angle = 20.0f * (i);
-		//		model = glm::rotate(model, (float)glfwGetTime()*glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-		//		lightingShader.setMat4("model", model);
-		//		glm::mat3 normal = glm::transpose(glm::inverse(model));
-		//		lightingShader.setMat3("normal", normal);
-
-		//		glDrawArrays(GL_TRIANGLES, 0, 36);
-		//	}
-		//}
-
 
 		glfwSwapBuffers(window);
 	}
@@ -319,7 +244,7 @@ void configureGLFWContext()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 }
 
-void processInput(GLFWwindow *window, Node *car)
+void processInput(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -379,6 +304,32 @@ void processInput(GLFWwindow *window, Node *car)
 		fogDistance += deltaTime * fogAdjustmentSpeed;
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 		fogDistance -= deltaTime * fogAdjustmentSpeed;
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	{
+		currentAngle += deltaTime;
+		if (currentAngle >= maxAngle)
+		{
+			currentAngle = maxAngle;
+		}
+		else
+		{
+			for (int i = 0; i < 2; i++)
+				spotLightNodes[i].modelMatrix = glm::rotate(spotLightNodes[i].modelMatrix, deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	{
+		currentAngle -= deltaTime;
+		if (currentAngle <= -maxAngle)
+		{
+			currentAngle = -maxAngle;
+		}
+		else
+		{
+			for (int i = 0; i < 2; i++)
+				spotLightNodes[i].modelMatrix = glm::rotate(spotLightNodes[i].modelMatrix, -deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		}
+	}
 }
 
 unsigned int loadTexture(char const * path)
