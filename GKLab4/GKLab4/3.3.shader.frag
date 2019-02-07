@@ -53,6 +53,7 @@ in vec3 Normal;
 
 #define NUM_POINT_LIGHTS 2
 
+uniform float fogDistance;
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 uniform vec3 viewPos;
@@ -83,7 +84,7 @@ void main()
 		result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
 	}
 
-	float depth = min(LinearizeDepth(gl_FragCoord.z)/10.0f, 1.0f);
+	float depth = min(LinearizeDepth(gl_FragCoord.z)/fogDistance, 1.0f);
     FragColor = vec4(mix(result, vec3(0.3f), depth), 1.0f);
 }
 

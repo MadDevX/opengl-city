@@ -141,6 +141,10 @@
     <None Include="3.3.shader.frag" />
     <None Include="3.3.shader.vert" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Lighting.h" />
+    <ClInclude Include="Node.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

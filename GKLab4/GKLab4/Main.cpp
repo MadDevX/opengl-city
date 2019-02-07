@@ -8,12 +8,13 @@
 #include <LearnOpenGL/Shader.h>
 #include <LearnOpenGL/Camera.h>
 #include <LearnOpenGL/Model.h>
+#include "Node.h"
 
 GLFWwindow* initOpenGLContext();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow *window, Node *car);
 unsigned int loadTexture(char const * path);
 
 int WINDOW_WIDTH = 800;
@@ -23,6 +24,10 @@ int WINDOW_HEIGHT = 600;
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
+
+float fogDistance = 20.0f;
+float fogAdjustmentSpeed = 5.0f;
+float carSpeed = 10.0f;
 bool firstMouse = true;
 
 // timing
@@ -95,7 +100,11 @@ int main()
 		glm::vec3(1.5f,  0.2f, -1.5f),
 		glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
-	Model ourModel("Resources/city/building.obj");
+	Model cityModel("Resources/city/cityS.obj");
+	Model carModel("Resources/Car/Chevrolet_Camaro_SS_Low.obj");
+
+	Node city(&cityModel, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(0.5f, 0.5f, 0.5f)));
+	Node car(&carModel, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.65f, 0.0f)), glm::vec3(0.25f, 0.25f, 0.25f)));
 
 	// positions of the point lights
 	glm::vec3 pointLightPositions[] = 
@@ -144,7 +153,7 @@ int main()
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		processInput(window);
+		processInput(window, &car);
 		glfwPollEvents();
 
 		//rendering
@@ -152,20 +161,15 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		modelShader.use();
+		modelShader.setFloat("fogDistance", fogDistance);
+
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
 		modelShader.setMat4("projection", projection);
 		modelShader.setMat4("view", view);
 
 		{
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // translate it down so it's at the center of the scene
-			model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
-			modelShader.setMat4("model", model);
-			glm::mat3 normal = glm::transpose(glm::inverse(model));
-			modelShader.setMat3("normal", normal);
 			modelShader.setVec3("viewPos", camera.Position);
-			modelShader.setFloat("material.shininess", 16.0f);
 
 			modelShader.setVec3("pointLights[0].position", pointLightPositions[0]);
 			modelShader.setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
@@ -183,7 +187,8 @@ int main()
 			modelShader.setFloat("pointLights[1].linear", 0.09f);
 			modelShader.setFloat("pointLights[1].quadratic", 0.032f);
 
-			ourModel.Draw(modelShader);
+			city.Draw(modelShader);
+			car.Draw(modelShader);
 		}
 
 		glBindVertexArray(lightVAO);
@@ -300,7 +305,7 @@ void configureGLFWContext()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 }
 
-void processInput(GLFWwindow *window)
+void processInput(GLFWwindow *window, Node *car)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true); 
@@ -313,6 +318,30 @@ void processInput(GLFWwindow *window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+	bool canRotate = false;
+	if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+	{
+		car->Move(glm::vec3(0.0f, 0.0f, deltaTime * carSpeed));
+		canRotate = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+	{
+		car->Move(glm::vec3(0.0f, 0.0f, -deltaTime * carSpeed));
+		canRotate = true;
+	}
+	if (canRotate)
+	{
+		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+			car->Rotate(deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+			car->Rotate(-deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+		fogDistance += deltaTime * fogAdjustmentSpeed;
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		fogDistance -= deltaTime * fogAdjustmentSpeed;
 }
 
 unsigned int loadTexture(char const * path)
