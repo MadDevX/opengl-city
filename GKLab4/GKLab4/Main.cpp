@@ -25,7 +25,7 @@ int WINDOW_HEIGHT = 600;
 
 // camera
 int activeCamera;
-Camera cameras[3] =
+Camera cameras[]
 {
 	Camera(glm::vec3(0.0f, 0.0f, 3.0f)),
 	Camera(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -35,7 +35,7 @@ Camera cameras[3] =
 float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
 
-int day;
+int day = 1;
 bool wasPressed = false;
 
 float fogDistance = 20.0f;
@@ -251,6 +251,22 @@ void configureGLFWContext()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 }
 
+void resetApp(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
+{
+	cameras[0] = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+	car->modelMatrix = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.65f, 0.0f)), glm::vec3(0.25f, 0.25f, 0.25f));
+	day = 1;
+	activeCamera = 0;
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	fogDistance = 20.0f;
+
+	for (int i = 0; i < 2; i++)
+	{
+		spotLightNodes[i].modelMatrix = glm::rotate(spotLightNodes[i].modelMatrix, -currentAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+	currentAngle = 0.0f;
+}
+
 void carInput(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
 {
 	bool canRotate = false;
@@ -360,6 +376,8 @@ void processInput(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+		resetApp(window, car, spotLightNodes);
 
 	settingsInput(window);
 
