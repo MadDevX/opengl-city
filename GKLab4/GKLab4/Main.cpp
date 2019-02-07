@@ -301,9 +301,9 @@ void processInput(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-		fogDistance += deltaTime * fogAdjustmentSpeed;
+		fogDistance = fminf(100.0f, fogDistance + deltaTime * fogAdjustmentSpeed);
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-		fogDistance -= deltaTime * fogAdjustmentSpeed;
+		fogDistance = fmaxf(1.0f, fogDistance - deltaTime * fogAdjustmentSpeed);
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
 	{
 		currentAngle += deltaTime;
