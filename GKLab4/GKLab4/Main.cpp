@@ -25,7 +25,7 @@ int WINDOW_HEIGHT = 600;
 
 // camera
 int activeCamera;
-Camera cameras[3] = 
+Camera cameras[3] =
 {
 	Camera(glm::vec3(0.0f, 0.0f, 3.0f)),
 	Camera(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -35,7 +35,9 @@ Camera cameras[3] =
 float lastX = WINDOW_WIDTH / 2.0f;
 float lastY = WINDOW_HEIGHT / 2.0f;
 
-glm::vec3 fogColor(0.1f, 0.1f, 0.1f);
+int day;
+bool wasPressed = false;
+
 float fogDistance = 20.0f;
 float fogAdjustmentSpeed = 5.0f;
 float carSpeed = 10.0f;
@@ -56,8 +58,8 @@ int main()
 	Shader lightingShader("3.3.shader.vert", "3.3.lightingShader.frag");
 	Shader lightSourceShader("3.3.shader.vert", "3.3.lightSourceShader.frag");
 
-	float vertices[] = 
-	{ 
+	float vertices[] =
+	{
 		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
 		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
@@ -111,7 +113,7 @@ int main()
 	Sphere mySphere(0.3f, 5, sphereMat);
 	GeometryNode sphereNode(&mySphere, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 
-	PointLight pointLights[] = 
+	PointLight pointLights[] =
 	{
 		{glm::vec3(0.7f,  1.2f,  2.0f), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(0.3f, 0.3f, 0.3f), 1.0f, 0.09f, 0.032f},
 		{glm::vec3(0.7f,  2.5f,  -5.0f), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(0.3f, 0.3f, 0.3f), 1.0f, 0.09f, 0.032f}
@@ -121,6 +123,18 @@ int main()
 	{
 		{glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(25.0f)), 1.0f, 0.09f, 0.032f, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)},
 		{glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(25.0f)), 1.0f, 0.09f, 0.032f, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)}
+	};
+
+	DirectionalLight dirLights[]
+	{
+		{glm::vec3(0.4f, -0.5f, -0.2f), glm::vec3(0.05f, 0.05f, 0.07f), glm::vec3(0.05f, 0.05f, 0.15f), glm::vec3(0.3f, 0.3f, 0.3f)},
+		{glm::vec3(-0.4f, -0.5f, 0.2f), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.5f, 0.5f, 0.4f), glm::vec3(0.5f, 0.5f, 0.5f)}
+	};
+
+	glm::vec3 fogColors[]
+	{
+		glm::vec3(0.05f, 0.05f, 0.05f),
+		glm::vec3(0.45f, 0.45f, 0.4f)
 	};
 
 	SpotLightNode spotLightNodes[] =
@@ -175,12 +189,12 @@ int main()
 		updateCameras(&car);
 
 		//rendering
-		glClearColor(fogColor.x, fogColor.y, fogColor.z, 1.0f);
+		glClearColor(fogColors[day].x, fogColors[day].y, fogColors[day].z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		modelShader.use();
 		modelShader.setFloat("fogDistance", fogDistance);
-		modelShader.setVec3("fogColor", fogColor);
+		modelShader.setVec3("fogColor", fogColors[day]);
 
 		glm::mat4 view = cameras[activeCamera].GetViewMatrix();
 		glm::mat4 projection = glm::perspective(glm::radians(cameras[activeCamera].Zoom), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
@@ -190,12 +204,12 @@ int main()
 		{
 			modelShader.setVec3("viewPos", cameras[activeCamera].Position);
 
+			dirLights[day].SetLight(modelShader, 0);
 			for (int i = 0; i < 2; i++)
 			{
 				pointLights[i].SetLight(modelShader, i);
 				spotLightNodes[i].UpdateLight(modelShader, i);
 			}
-
 			city.Draw(modelShader);
 			car.Draw(modelShader);
 			sphereNode.Draw(modelShader);
@@ -237,11 +251,61 @@ void configureGLFWContext()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 }
 
-void processInput(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
+void carInput(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
 {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
+	bool canRotate = false;
+	float rotateDir;
+	if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+	{
+		car->Move(glm::vec3(0.0f, 0.0f, deltaTime * carSpeed));
+		canRotate = !canRotate;
+		rotateDir = 1.0f;
+	}
+	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+	{
+		car->Move(glm::vec3(0.0f, 0.0f, -deltaTime * carSpeed));
+		canRotate = !canRotate;
+		rotateDir = -1.0f;
+	}
+	if (canRotate)
+	{
+		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+			car->Rotate(deltaTime * carRotateSpeed, glm::vec3(0.0f, rotateDir, 0.0f));
+		if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+			car->Rotate(-deltaTime * carRotateSpeed, glm::vec3(0.0f, rotateDir, 0.0f));
+	}
 
+	//rotate spotlights
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	{
+		currentAngle += deltaTime;
+		if (currentAngle >= maxAngle)
+		{
+			currentAngle = maxAngle;
+		}
+		else
+		{
+			for (int i = 0; i < 2; i++)
+				spotLightNodes[i].modelMatrix = glm::rotate(spotLightNodes[i].modelMatrix, deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	{
+		currentAngle -= deltaTime;
+		if (currentAngle <= -maxAngle)
+		{
+			currentAngle = -maxAngle;
+		}
+		else
+		{
+			for (int i = 0; i < 2; i++)
+				spotLightNodes[i].modelMatrix = glm::rotate(spotLightNodes[i].modelMatrix, -deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+		}
+	}
+}
+
+void cameraInput(GLFWwindow *window)
+{
 	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
 	{
 		activeCamera = 0;
@@ -270,59 +334,38 @@ void processInput(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 			cameras[activeCamera].ProcessKeyboard(RIGHT, cameraSpeed);
 	}
+}
 
-	bool canRotate = false;
-	float rotateDir;
-	if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
-	{
-		car->Move(glm::vec3(0.0f, 0.0f, deltaTime * carSpeed));
-		canRotate = !canRotate;
-		rotateDir = 1.0f;
-	}
-	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
-	{
-		car->Move(glm::vec3(0.0f, 0.0f, -deltaTime * carSpeed));
-		canRotate = !canRotate;
-		rotateDir = -1.0f;
-	}
-	if (canRotate)
-	{
-		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
-			car->Rotate(deltaTime * carRotateSpeed, glm::vec3(0.0f, rotateDir, 0.0f));
-		if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-			car->Rotate(-deltaTime * carRotateSpeed, glm::vec3(0.0f, rotateDir, 0.0f));
-	}
-
+void settingsInput(GLFWwindow *window)
+{
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 		fogDistance = fminf(100.0f, fogDistance + deltaTime * fogAdjustmentSpeed);
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 		fogDistance = fmaxf(1.0f, fogDistance - deltaTime * fogAdjustmentSpeed);
-	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+
+	if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
 	{
-		currentAngle += deltaTime;
-		if (currentAngle >= maxAngle)
+		if (wasPressed == false)
 		{
-			currentAngle = maxAngle;
-		}
-		else
-		{
-			for (int i = 0; i < 2; i++)
-				spotLightNodes[i].modelMatrix = glm::rotate(spotLightNodes[i].modelMatrix, deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+			day = 1 - day;
+			wasPressed = true;
 		}
 	}
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	else if (glfwGetKey(window, GLFW_KEY_N) == GLFW_RELEASE)
 	{
-		currentAngle -= deltaTime;
-		if (currentAngle <= -maxAngle)
-		{
-			currentAngle = -maxAngle;
-		}
-		else
-		{
-			for (int i = 0; i < 2; i++)
-				spotLightNodes[i].modelMatrix = glm::rotate(spotLightNodes[i].modelMatrix, -deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
-		}
+		wasPressed = false;
 	}
+}
+void processInput(GLFWwindow *window, Node *car, SpotLightNode *spotLightNodes)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	settingsInput(window);
+
+	cameraInput(window);
+
+	carInput(window, car, spotLightNodes);
 }
 
 unsigned int loadTexture(char const * path)
@@ -399,11 +442,11 @@ GLFWwindow* initOpenGLContext()
 	}
 
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); 
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	glEnable(GL_DEPTH_TEST); 
+	glEnable(GL_DEPTH_TEST);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(window, mouse_callback); 
+	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 
 	return window;
@@ -431,7 +474,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	lastX = (float)xpos;
 	lastY = (float)ypos;
 
-	if(activeCamera == 0)
+	if (activeCamera == 0)
 		cameras[activeCamera].ProcessMouseMovement(xoffset, yoffset);
 }
 
@@ -445,7 +488,7 @@ void updateCameras(Node *car)
 	glm::mat4 offset = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 5.0f, -15.0f));
 	glm::vec4 carPos = car->modelMatrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	cameras[1].Position = car->modelMatrix * offset * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	cameras[1].Front = glm::vec3(carPos.x, carPos.y+0.5f, carPos.z) - cameras[1].Position;
+	cameras[1].Front = glm::vec3(carPos.x, carPos.y + 0.5f, carPos.z) - cameras[1].Position;
 
 	cameras[2].Front = glm::vec3(carPos.x, carPos.y + 0.25f, carPos.z) - cameras[2].Position;
 }

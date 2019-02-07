@@ -92,6 +92,10 @@ void main()
 	{
 		result += CalcSpotLight(spotLights[i], norm, FragPos, viewDir);
 	}
+	for(int i = 0; i < NUM_DIR_LIGHTS; i++)
+	{
+		result += CalcDirLight(dirLights[i], norm, viewDir);
+	}
 
 	float depth = min(LinearizeDepth(gl_FragCoord.z)/fogDistance, 1.0f);
     FragColor = vec4(mix(result, fogColor, depth), 1.0f);
