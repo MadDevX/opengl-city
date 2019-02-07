@@ -6,6 +6,7 @@
 #include <LearnOpenGL/Model.h>
 #include <vector>
 #include "Lighting.h"
+#include "SphereGenerator.h"
 
 
 class Node
@@ -86,6 +87,28 @@ public:
 		glm::mat3 normal = glm::transpose(glm::inverse(currentMatrix));
 		shader.setMat3("normal", normal);
 		model->Draw(shader);
+		DrawChildren(shader, currentMatrix);
+	}
+};
+
+class GeometryNode : public Node
+{
+public:
+	Sphere *geometry;
+
+	GeometryNode(Sphere *geometry, glm::mat4 modelMatrix)
+	{
+		this->geometry = geometry;
+		this->modelMatrix = modelMatrix;
+	}
+
+	void Draw(Shader shader, glm::mat4 parentMatrix = glm::mat4(1.0f))
+	{
+		glm::mat4 currentMatrix = parentMatrix * modelMatrix;
+		shader.setMat4("model", currentMatrix);
+		glm::mat3 normal = glm::transpose(glm::inverse(currentMatrix));
+		shader.setMat3("normal", normal);
+		geometry->Draw(shader);
 		DrawChildren(shader, currentMatrix);
 	}
 };

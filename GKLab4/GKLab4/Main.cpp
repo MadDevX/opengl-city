@@ -10,6 +10,7 @@
 #include <LearnOpenGL/Model.h>
 #include "Node.h"
 #include "Lighting.h"
+#include "SphereGenerator.h"
 
 GLFWwindow* initOpenGLContext();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -106,10 +107,14 @@ int main()
 	ModelNode car(&carModel, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.65f, 0.0f)), glm::vec3(0.25f, 0.25f, 0.25f)));
 	//car.AttachChild(&ModelNode(&carModel, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 10.0f)), glm::vec3(0.5f, 0.5f, 0.5f))));
 
+	Material sphereMat{ glm::vec3(0.0f, 0.5f, 1.0f), glm::vec3(0.0f, 0.5f, 1.0f), glm::vec3(1.0f), 64.0f };
+	Sphere mySphere(0.3f, 5, sphereMat);
+	GeometryNode sphereNode(&mySphere, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+
 	PointLight pointLights[] = 
 	{
 		{glm::vec3(0.7f,  1.2f,  2.0f), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(0.3f, 0.3f, 0.3f), 1.0f, 0.09f, 0.032f},
-		{glm::vec3(-2.5f, -2.5f, -3.0f), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(0.3f, 0.3f, 0.3f), 1.0f, 0.09f, 0.032f}
+		{glm::vec3(0.7f,  2.5f,  -5.0f), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.8f, 0.8f, 0.8f), glm::vec3(0.3f, 0.3f, 0.3f), 1.0f, 0.09f, 0.032f}
 	};
 
 	SpotLight spotLights[] =
@@ -193,6 +198,7 @@ int main()
 
 			city.Draw(modelShader);
 			car.Draw(modelShader);
+			sphereNode.Draw(modelShader);
 		}
 
 		glBindVertexArray(lightVAO);
@@ -220,7 +226,6 @@ int main()
 	}
 
 	glfwTerminate();
-
 	return EXIT_SUCCESS;
 }
 
