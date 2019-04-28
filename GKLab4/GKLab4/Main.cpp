@@ -117,7 +117,7 @@ int main()
 	//car.AttachChild(&ModelNode(&carModel, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 10.0f)), glm::vec3(0.5f, 0.5f, 0.5f))));
 
 	Material sphereMat{ glm::vec3(0.0f, 0.5f, 1.0f), glm::vec3(0.0f, 0.5f, 1.0f), glm::vec3(1.0f), 64.0f };
-	Sphere mySphere(0.3f, 5, sphereMat);
+	Sphere mySphere(0.3f, 3, sphereMat);
 	GeometryNode sphereNode(&mySphere, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 
 	PointLight pointLights[] =
@@ -195,7 +195,15 @@ int main()
 		modelShaders[phong].setVec3("fogColor", fogColors[day]);
 
 		glm::mat4 view = cameras[activeCamera].GetViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(cameras[activeCamera].Zoom), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 projection;
+		if (WINDOW_HEIGHT == 0 || WINDOW_WIDTH == 0)
+		{
+			projection = glm::mat4(1.0f);
+		}
+		else
+		{
+			projection = glm::perspective(glm::radians(cameras[activeCamera].Zoom), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
+		}
 		modelShaders[phong].setMat4("projection", projection);
 		modelShaders[phong].setMat4("view", view);
 
